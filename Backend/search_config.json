@@ -1,0 +1,18 @@
+{
+  "search_terms": [
+    {
+      "id": "1",
+      "query": "playstation 5",
+      "enabled": true,
+      "max_price": 500,
+      "min_price": 0
+    },
+    {
+      "id": "2",
+      "query": "iphone 15",
+      "enabled": true,
+      "max_price": 1000,
+      "min_price": 0
+    }
+  ]
+}
