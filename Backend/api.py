@@ -1,11 +1,15 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from scraper import MarktplaatsScraper
+import database
 import json
 import os
 
 app = Flask(__name__)
 CORS(app)
+
+# Initialize database
+database.init_database()
 
 scraper = MarktplaatsScraper()
 
@@ -33,7 +37,42 @@ def search():
         return jsonify({'error': 'Query is verplicht'}), 400
     
     results = scraper.search(query, max_price, min_price)
+    
+    # Sla resultaten ook op in database voor cache
+    for ad in results:
+        database.add_search_result(ad, query)
+    
     return jsonify({'results': results, 'count': len(results)})
+
+@app.route('/api/monitor-results', methods=['GET'])
+def get_monitor_results():
+    """Haal alle monitor resultaten op uit database"""
+    days = request.args.get('days', 7, type=int)
+    results = database.get_all_monitor_results(days=days)
+    return jsonify({'results': results, 'count': len(results)})
+
+@app.route('/api/delete-monitor-result', methods=['POST'])
+def delete_monitor_result():
+    """Verwijder een specifiek monitor resultaat"""
+    data = request.json
+    ad_id = data.get('ad_id')
+    monitor_term = data.get('monitor_term')
+    
+    if not ad_id or not monitor_term:
+        return jsonify({'error': 'ad_id en monitor_term zijn verplicht'}), 400
+    
+    success = database.delete_monitor_result_by_id(ad_id, monitor_term)
+    
+    if success:
+        return jsonify({'success': True})
+    else:
+        return jsonify({'error': 'Resultaat niet gevonden'}), 404
+
+@app.route('/api/statistics', methods=['GET'])
+def get_statistics():
+    """Haal statistieken op"""
+    stats = database.get_statistics()
+    return jsonify(stats)
 
 @app.route('/api/search-terms', methods=['GET'])
 def get_search_terms():
@@ -82,20 +121,30 @@ def update_search_term(term_id):
 
 @app.route('/api/search-terms/<term_id>', methods=['DELETE'])
 def delete_search_term(term_id):
-    """Verwijder zoekterm"""
+    """Verwijder zoekterm en alle bijbehorende resultaten"""
     config = load_config()
-    original_length = len(config.get('search_terms', []))
     
+    # Find the term to get its query
+    term_to_delete = None
+    for term in config.get('search_terms', []):
+        if term['id'] == term_id:
+            term_to_delete = term
+            break
+    
+    if not term_to_delete:
+        return jsonify({'error': 'Zoekterm niet gevonden'}), 404
+    
+    # Remove the term from config
     config['search_terms'] = [
         t for t in config.get('search_terms', []) 
         if t['id'] != term_id
     ]
+    save_config(config)
     
-    if len(config['search_terms']) < original_length:
-        save_config(config)
-        return jsonify({'success': True})
+    # Delete all monitor results from database for this term
+    database.delete_monitor_results_by_term(term_to_delete['query'])
     
-    return jsonify({'error': 'Zoekterm niet gevonden'}), 404
+    return jsonify({'success': True})
 
 @app.route('/api/health', methods=['GET'])
 def health():
@@ -103,4 +152,5 @@ def health():
     return jsonify({'status': 'ok', 'service': 'Marktplaats Scraper API'})
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    # use_reloader=False voorkomt crashes bij file changes
+    app.run(debug=True, host='0.0.0.0', port=5000, use_reloader=False)

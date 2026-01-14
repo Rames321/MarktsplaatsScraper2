@@ -3,6 +3,7 @@ from discord.ext import commands, tasks
 import os
 from dotenv import load_dotenv
 from scraper import MarktplaatsScraper
+import database
 import json
 from datetime import datetime
 import sys
@@ -25,6 +26,10 @@ TOKEN = os.getenv('DISCORD_BOT_TOKEN')
 CHANNEL_ID = int(os.getenv('DISCORD_CHANNEL_ID', '0'))
 CHECK_INTERVAL = int(os.getenv('CHECK_INTERVAL_MINUTES', '5'))
 
+# Bepaal de directory waar dit script staat
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+CONFIG_FILE = os.path.join(SCRIPT_DIR, 'search_config.json')
+
 # Bot setup
 intents = discord.Intents.default()
 intents.message_content = True
@@ -35,14 +40,14 @@ scraper = MarktplaatsScraper()
 def load_search_config():
     """Laad zoektermen uit configuratie"""
     try:
-        with open('search_config.json', 'r', encoding='utf-8') as f:
+        with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
             return json.load(f)
     except FileNotFoundError:
         return {"search_terms": []}
 
 def save_search_config(config):
     """Sla zoektermen op"""
-    with open('search_config.json', 'w', encoding='utf-8') as f:
+    with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
         json.dump(config, f, ensure_ascii=False, indent=2)
 
 def create_ad_embed(ad, query):
@@ -70,6 +75,7 @@ def create_ad_embed(ad, query):
 async def on_ready():
     print(f'✓ Bot is ingelogd als {bot.user}')
     print(f'✓ Check interval: elke {CHECK_INTERVAL} minuten')
+    database.init_database()
     if not check_new_ads.is_running():
         check_new_ads.start()
 
@@ -97,12 +103,15 @@ async def check_new_ads():
         new_ads = scraper.get_new_ads(query, max_price, min_price)
         
         for ad in new_ads:
-            embed = create_ad_embed(ad, query)
-            try:
-                await channel.send(embed=embed)
-                print(f"✓ Notificatie verstuurd: {ad['title']}")
-            except Exception as e:
-                print(f"✗ Error bij versturen notificatie: {e}")
+            # Sla op in database
+            if database.add_monitor_result(ad, query):
+                embed = create_ad_embed(ad, query)
+                try:
+                    await channel.send(embed=embed)
+                    database.mark_as_notified(ad['id'], query)
+                    print(f"✓ Notificatie verstuurd: {ad['title']}")
+                except Exception as e:
+                    print(f"✗ Error bij versturen notificatie: {e}")
 
 @check_new_ads.before_loop
 async def before_check():
@@ -193,6 +202,13 @@ async def list_searches(ctx):
         )
     
     await ctx.send(embed=embed)
+
+@bot.command(name='check')
+async def manual_check(ctx):
+    """Forceer een handmatige check: !check"""
+    await ctx.send("🔍 Checking voor nieuwe advertenties...")
+    await check_new_ads()
+    await ctx.send("✓ Check voltooid!")
 
 @bot.command(name='help_scraper')
 async def help_command(ctx):
