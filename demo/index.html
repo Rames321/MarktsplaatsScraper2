@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Marktplaats Scraper — Live Demo</title>
+  <meta name="description" content="Interactieve demo van de Marktplaats Scraper: zoek, filter en krijg een melding bij een nieuwe match. Prototype met voorbeelddata." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 50 50'%3E%3Ccircle cx='25' cy='25' r='23' fill='%23667eea'/%3E%3Cpath d='M25 15l7 7-7 7M18 22h14' stroke='white' stroke-width='3' fill='none' stroke-linecap='round'/%3E%3C/svg%3E" />
+</head>
+<body>
+  <!-- Eerlijke demo-banner -->
+  <div class="demo-banner">
+    <span class="demo-banner__dot"></span>
+    <strong>Demo / prototype</strong>
+    <span class="demo-banner__text">— draait volledig in je browser met <strong>voorbeelddata</strong>. De echte scraper (Python&nbsp;+&nbsp;backend) draait lokaal en haalt live advertenties van Marktplaats.</span>
+    <a class="demo-banner__link" href="https://github.com/Rames321/MarktsplaatsScraper2" target="_blank" rel="noopener">Broncode ↗</a>
+  </div>
+
+  <div class="app">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <svg width="46" height="46" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <circle cx="25" cy="25" r="23" fill="url(#g)" stroke="white" stroke-width="2"/>
+            <path d="M25 15L32 22L25 29" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M18 22H32" stroke="white" stroke-width="3" stroke-linecap="round"/>
+            <path d="M20 30H30" stroke="white" stroke-width="2" stroke-linecap="round"/>
+            <defs>
+              <linearGradient id="g" x1="0" y1="0" x2="50" y2="50">
+                <stop offset="0%" stop-color="#667eea"/>
+                <stop offset="100%" stop-color="#764ba2"/>
+              </linearGradient>
+            </defs>
+          </svg>
+          <div class="logo-text">
+            <h2>Marktplaats</h2>
+            <span>Scraper Pro</span>
+          </div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-scroll="search-panel">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><path d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"/></svg>
+          <span>Zoeken &amp; filteren</span>
+        </button>
+        <button class="nav-item" data-scroll="results-panel">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5z" clip-rule="evenodd"/></svg>
+          <span>Resultaten</span>
+          <span class="badge" id="navResultCount">0</span>
+        </button>
+        <button class="nav-item" id="monitorToggleBtn">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><path d="M10 2a6 6 0 00-6 6v3.586l-.707.707A1 1 0 004 14h12a1 1 0 00.707-1.707L16 11.586V8a6 6 0 00-6-6zM10 18a3 3 0 01-3-3h6a3 3 0 01-3 3z"/></svg>
+          <span>Monitor</span>
+          <span class="badge badge--off" id="monitorStateBadge">uit</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="stats-card">
+          <div class="stat">
+            <span class="stat-label">Zichtbare resultaten</span>
+            <span class="stat-value" id="statVisible">0</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Nieuwe matches</span>
+            <span class="stat-value" id="statNew">0</span>
+          </div>
+        </div>
+        <p class="sidebar-note">Voorbeelddata · geen live scraping</p>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main-content">
+      <header class="top-bar">
+        <div>
+          <h1>Zoeken &amp; filteren</h1>
+          <p class="subtitle">Pas de criteria aan — de lijst filtert direct mee.</p>
+        </div>
+        <button class="monitor-pill" id="monitorPill">
+          <span class="monitor-pill__dot"></span>
+          <span id="monitorPillText">Monitor starten</span>
+        </button>
+      </header>
+
+      <div class="content-wrapper">
+        <!-- Filterpaneel -->
+        <section class="panel" id="search-panel">
+          <div class="panel-header">
+            <h2>Zoekopdracht</h2>
+            <p>Zoals de echte scraper: zoekterm, prijs van–tot, locatie, conditie en sortering.</p>
+          </div>
+
+          <div class="search-box">
+            <svg class="search-icon" width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><path d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"/></svg>
+            <input type="text" id="searchTerm" placeholder="Zoek naar iPhone, PS5, MacBook, fiets..." autocomplete="off" />
+            <button class="clear-search" id="clearSearch" title="Wis zoekterm" hidden>×</button>
+          </div>
+
+          <div class="filter-grid">
+            <div class="filter-item">
+              <label for="minPrice">Prijs van (€)</label>
+              <input type="number" id="minPrice" placeholder="0" min="0" />
+            </div>
+            <div class="filter-item">
+              <label for="maxPrice">Prijs tot (€)</label>
+              <input type="number" id="maxPrice" placeholder="geen max" min="0" />
+            </div>
+            <div class="filter-item">
+              <label for="location">Locatie</label>
+              <select id="location">
+                <option value="">Heel Nederland</option>
+              </select>
+            </div>
+            <div class="filter-item">
+              <label for="distance">Max. afstand</label>
+              <select id="distance">
+                <option value="">Geen limiet</option>
+                <option value="10">Binnen 10 km</option>
+                <option value="25">Binnen 25 km</option>
+                <option value="50">Binnen 50 km</option>
+                <option value="100">Binnen 100 km</option>
+              </select>
+            </div>
+            <div class="filter-item">
+              <label for="condition">Conditie</label>
+              <select id="condition">
+                <option value="">Alle condities</option>
+                <option value="Nieuw">Nieuw</option>
+                <option value="Zo goed als nieuw">Zo goed als nieuw</option>
+                <option value="Gebruikt">Gebruikt</option>
+              </select>
+            </div>
+            <div class="filter-item">
+              <label for="sortBy">Sorteren</label>
+              <select id="sortBy">
+                <option value="date">Nieuwste eerst</option>
+                <option value="price-asc">Prijs (laag → hoog)</option>
+                <option value="price-desc">Prijs (hoog → laag)</option>
+                <option value="distance">Dichtstbijzijnd</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="filter-actions">
+            <label class="checkbox">
+              <input type="checkbox" id="excludeBidding" />
+              <span>Verberg "Bieden" / vraagprijs</span>
+            </label>
+            <button class="reset-btn" id="resetFilters">↺ Reset filters</button>
+          </div>
+        </section>
+
+        <!-- Resultaten -->
+        <section class="panel" id="results-panel">
+          <div class="panel-header results-header">
+            <div>
+              <h2>Resultaten</h2>
+              <p id="resultSummary">—</p>
+            </div>
+            <div class="active-filters" id="activeFilters"></div>
+          </div>
+
+          <div class="results-grid" id="resultsGrid"></div>
+
+          <div class="empty-state" id="emptyState" hidden>
+            <svg width="56" height="56" viewBox="0 0 20 20" fill="currentColor" opacity="0.25"><path d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"/></svg>
+            <p>Geen advertenties gevonden met deze criteria.</p>
+            <button class="reset-btn" id="emptyReset">Wis filters</button>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- Toast container voor "nieuwe match"-meldingen -->
+  <div class="toast-stack" id="toastStack" aria-live="polite"></div>
+
+  <script src="data.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
