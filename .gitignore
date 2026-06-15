@@ -32,6 +32,7 @@ wheels/
 Backend/data/
 *.json
 !Backend/search_config.json
+!vercel.json
 
 # Frontend
 Frontend/node_modules/
