@@ -169,7 +169,7 @@ const SAMPLE_LISTINGS = [
 ];
 
 // Aanbiedingen die de "monitor" later als nieuwe match kan binnenhalen.
-// Deze zitten NIET in de begin-resultaten — ze 'verschijnen' via de toast,
+// Deze zitten NIET in de begin-resultaten, ze 'verschijnen' via de toast,
 // precies zoals de echte scraper periodiek nieuwe advertenties oppikt.
 const INCOMING_MATCHES = [
   {

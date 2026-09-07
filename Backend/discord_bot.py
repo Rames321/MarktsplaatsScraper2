@@ -52,8 +52,11 @@ def save_search_config(config):
 
 def create_ad_embed(ad, query):
     """Maak een Discord embed voor een advertentie"""
+    # Discord heeft een limiet van 256 karakters voor title
+    title = ad['title'][:253] + "..." if len(ad['title']) > 256 else ad['title']
+    
     embed = discord.Embed(
-        title=ad['title'],
+        title=title,
         url=ad['link'],
         description=f"🔍 Zoekterm: **{query}**",
         color=discord.Color.green(),

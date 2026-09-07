@@ -1,3 +1,11 @@
 {
-  "search_terms": []
+  "search_terms": [
+    {
+      "id": "1",
+      "query": "watch",
+      "enabled": true,
+      "max_price": 0,
+      "min_price": 0
+    }
+  ]
 }

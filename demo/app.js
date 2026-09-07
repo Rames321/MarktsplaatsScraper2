@@ -1,8 +1,8 @@
 // ===========================================================================
-// Marktplaats Scraper — demo logica (vanilla JS, geen build, geen backend)
+// Marktplaats Scraper demo logica (vanilla JS, geen build, geen backend)
 //
 // Wat dit nabouwt van de echte scraper:
-//  - live filteren op zoekterm, prijs van–tot, locatie, afstand, conditie
+//  - live filteren op zoekterm, prijs van-tot, locatie, afstand, conditie
 //  - sorteren (nieuwste / prijs / afstand)
 //  - een gesimuleerde "nieuwe match"-monitor die periodiek een toast toont,
 //    precies zoals de Python-backend nieuwe advertenties oppikt en een
@@ -137,7 +137,7 @@
             <span>📍 ${escapeHtml(l.location)} · ${l.distanceKm} km</span>
             <span>🕑 ${escapeHtml(l.date)}</span>
           </div>
-          <a class="result-link" href="#" onclick="return false" title="Demo — geen echte advertentie">Bekijk advertentie →</a>
+          <a class="result-link" href="#" onclick="return false" title="Demo, geen echte advertentie">Bekijk advertentie →</a>
         </div>
       </article>`;
   }
@@ -192,7 +192,7 @@
   function setMonitor(on) {
     monitorOn = on;
     els.monitorPill.classList.toggle("on", on);
-    els.monitorPillText.textContent = on ? "Monitor actief — checkt elke 6s" : "Monitor starten";
+    els.monitorPillText.textContent = on ? "Monitor actief (checkt elke 6s)" : "Monitor starten";
     els.monitorToggleBtn.classList.toggle("monitor-on", on);
     els.monitorStateBadge.textContent = on ? "aan" : "uit";
     els.monitorStateBadge.classList.toggle("badge--off", !on);
@@ -288,7 +288,7 @@
     render();
 
     // Start de monitor automatisch zodat de "nieuwe match"-melding zichzelf
-    // toont — een bezoeker ziet het kernidee zonder iets te hoeven klikken.
+    // toont. Een bezoeker ziet het kernidee zonder iets te hoeven klikken.
     setTimeout(() => setMonitor(true), 2500);
   }
 
